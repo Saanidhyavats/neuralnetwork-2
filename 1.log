@@ -1,0 +1,84 @@
+import matplotlib.pyplot as plt
+#distributing the model in training and test set
+from sklearn import datasets
+import numpy as np
+iris=datasets.load_iris()
+x=iris.data[:, :]
+y=iris.target
+#feature scaling
+min_value=np.amin(x,axis=0)
+max_value=np.amax(x,axis=0)
+for j in range(0,4):
+ for i in range(0,150):
+  x[i,j]=(x[i,j]-min_value[j])/(max_value[j]-min_value[j])
+#converting categorical values into different columns
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+onehotencoder=OneHotEncoder(categorical_features=[0])
+y=onehotencoder.fit_transform(y.reshape(-1,1)).toarray()
+import numpy as np
+x_train=x[0:30,:]
+y_train=y[0:30]
+x_train=np.append(x_train,x[50:80,:],axis=0)
+x_train=np.append(x_train,x[100:130,:],axis=0)
+y_train=np.append(y_train,y[50:80],axis=0)
+y_train=np.append(y_train,y[100:130],axis=0)
+x_test=x[30:50,:]
+x_test=np.append(x_test,x[80:100],axis=0)
+x_test=np.append(x_test,x[130:150],axis=0)
+y_test=y[30:50]
+y_test=np.append(y_test,y[80:100],axis=0)
+y_test=np.append(y_test,y[130:150],axis=0)
+ep=[]
+cos=[]
+count=0
+#building the model
+np.random.seed(0)
+w1=np.random.rand(4,3)
+w2=np.random.rand(3,3)
+b=np.random.rand(1,3)
+b2=np.random.rand(1,3)
+error=1000 #putting a random value
+while ((np.sum(0.5*(error**2))/90)>=0.0001):
+ count+=1
+ ep=ep+[count]
+ z=np.dot(x_train,w1)+b
+ def sigmoid(n):
+  return(1/(1+np.exp(-n)))
+ def sig_deriv(x):
+   return (sigmoid(x)*(1-sigmoid(x)))
+ a1=sigmoid(z)
+ z2=np.dot(a1,w2)+b2
+ y_pred=sigmoid(z2)  
+ error=y_pred-y_train
+ print((np.sum(0.5*(error**2))/90))
+ cos=cos+[np.sum(0.5*(error**2))]
+ #backpropagation algorithm
+ dcost_dpred=error
+ dpred_dz2=sig_deriv(z2)
+ dcost_dz2=dcost_dpred*dpred_dz2
+ w2-=0.05*np.dot(a1.T,dcost_dz2)
+ for num in dcost_dz2:
+    b2-=0.05*num
+ dz2_da1=w2
+ da1_dz=sig_deriv(z)
+ q=da1_dz.reshape((90,3))
+ dz2_dz=np.dot(q,dz2_da1)
+ dcost_dz=dz2_dz*dcost_dz2
+ w1-=0.05*np.dot(x_train.T,dcost_dz)
+ for num in dcost_dz:
+    b-=0.05*num
+z3=np.dot(x_test,w1)+b
+a3=sigmoid(z3)
+l3=np.dot(a3,w2)+b2
+y_pred3=sigmoid(l3)
+error_test=y_pred3-y_test
+print(np.sum(0.5*(error_test**2))/60)      
+plt.figure()
+plt.plot(ep,cos)
+e=0.1
+count=0
+for j in range(0,3):
+ for i in range(0,60):
+  if((y_pred3[i,j]+e>=y_test[i,j]) and (y_pred3[i,j]-e<=y_test[i,j])):
+    count+=1
+print(count*100/180)
